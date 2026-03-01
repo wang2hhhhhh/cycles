@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jun — Work</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    main {
+      padding: 60px 48px 80px;
+      max-width: 800px;
+    }
+
+    .project-group {
+      margin-bottom: 48px;
+    }
+
+    .group-label {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #bbb;
+      margin-bottom: 12px;
+    }
+
+    .project-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+
+    .project-row:first-of-type {
+      border-top: 1px solid #f5f5f5;
+    }
+
+    .project-name {
+      font-size: 13px;
+      color: #111;
+      text-decoration: none;
+    }
+
+    .project-name:hover {
+      color: #555;
+    }
+
+    .project-name.placeholder {
+      color: #ccc;
+    }
+
+    .project-year {
+      font-size: 11px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="site-name">Jun</a>
+    <div class="nav-links">
+      <a href="index.html" class="active">Work</a>
+      <a href="info.html">Info</a>
+    </div>
+  </nav>
+  <main>
+    <div class="project-group">
+      <p class="group-label">Photography</p>
+      <div class="project-row">
+        <a href="projects/cycles/" class="project-name">Cycles</a>
+        <span class="project-year">2024</span>
+      </div>
+      <div class="project-row">
+        <span class="project-name placeholder">[Project Name]</span>
+        <span class="project-year">—</span>
+      </div>
+    </div>
+    <div class="project-group">
+      <p class="group-label">[Category]</p>
+      <div class="project-row">
+        <span class="project-name placeholder">[Project Name]</span>
+        <span class="project-year">—</span>
+      </div>
+      <div class="project-row">
+        <span class="project-name placeholder">[Project Name]</span>
+        <span class="project-year">—</span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

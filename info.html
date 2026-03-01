@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jun — Info</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    main {
+      padding: 60px 48px 80px;
+      max-width: 640px;
+    }
+
+    .info-section {
+      margin-bottom: 48px;
+    }
+
+    .section-label {
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #bbb;
+      margin-bottom: 16px;
+    }
+
+    .bio {
+      font-size: 13px;
+      line-height: 1.9;
+      color: #888;
+    }
+
+    .contact-row {
+      display: flex;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+      gap: 32px;
+    }
+
+    .contact-row:first-of-type {
+      border-top: 1px solid #f5f5f5;
+    }
+
+    .contact-label {
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      color: #bbb;
+      width: 80px;
+      flex-shrink: 0;
+    }
+
+    .contact-value {
+      font-size: 13px;
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html" class="site-name">Jun</a>
+    <div class="nav-links">
+      <a href="index.html">Work</a>
+      <a href="info.html" class="active">Info</a>
+    </div>
+  </nav>
+  <main>
+    <div class="info-section">
+      <p class="section-label">About</p>
+      <p class="bio">[Placeholder bio text. A few sentences about who you are, what you do, and what you're interested in. Keep it brief and honest.]</p>
+    </div>
+    <div class="info-section">
+      <p class="section-label">Contact</p>
+      <div class="contact-row">
+        <span class="contact-label">Email</span>
+        <span class="contact-value">[email@example.com]</span>
+      </div>
+      <div class="contact-row">
+        <span class="contact-label">Instagram</span>
+        <span class="contact-value">[@handle]</span>
+      </div>
+      <div class="contact-row">
+        <span class="contact-label">Location</span>
+        <span class="contact-value">[City, Country]</span>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
