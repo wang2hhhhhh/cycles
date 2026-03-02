@@ -97,6 +97,14 @@
       }
       container.appendChild(header);
 
+      // Lightbox
+      const lightbox = document.createElement('div');
+      lightbox.className = 'lightbox';
+      const lightboxImg = document.createElement('img');
+      lightbox.appendChild(lightboxImg);
+      lightbox.addEventListener('click', () => lightbox.classList.remove('active'));
+      container.appendChild(lightbox);
+
       project.series.forEach(series => {
         const section = document.createElement('div');
         section.className = 'series-section';
@@ -119,6 +127,10 @@
           img.style.height = '300px';
           img.style.width = 'auto';
           img.style.flexShrink = '0';
+          img.addEventListener('click', () => {
+            lightboxImg.src = src;
+            lightbox.classList.add('active');
+          });
           track.appendChild(img);
         });
 
