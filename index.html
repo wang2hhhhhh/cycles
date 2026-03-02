@@ -78,6 +78,9 @@
           const img = document.createElement('img');
           img.src = src;
           img.alt = series.name;
+          img.style.height = '300px';
+          img.style.width = 'auto';
+          img.style.flexShrink = '0';
           track.appendChild(img);
         });
 
