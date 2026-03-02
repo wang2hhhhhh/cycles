@@ -15,18 +15,14 @@
         <a href="info.html">Info</a>
       </div>
       <div class="project-list">
-        <div class="project-row" data-project="cycles">
+        <div class="project-row active" data-project="cycles">
           <span class="project-name">Cycles</span>
           <span class="project-year">2024</span>
         </div>
       </div>
     </aside>
 
-    <main class="viewer">
-      <img class="viewer-img" src="" alt="" style="display:none">
-      <button class="arrow arrow-prev" aria-label="Previous photo">&#8592;</button>
-      <button class="arrow arrow-next" aria-label="Next photo">&#8594;</button>
-    </main>
+    <main class="main-content" id="project-content"></main>
   </div>
 
   <script>
@@ -34,64 +30,86 @@
       cycles: {
         title: "Cycles",
         year: "2024",
-        photos: [
-          "projects/cycles/photos-web/relationship/DSCF1830.JPG",
-          "projects/cycles/photos-web/relationship/DSCF2208.JPG",
-          "projects/cycles/photos-web/relationship/DSCF2221.JPG",
-          "projects/cycles/photos-web/relationship/DSCF2381.JPG",
-          "projects/cycles/photos-web/relationship/DSCF2690.jpeg",
-          "projects/cycles/photos-web/sun/DSCF3459.JPG",
-          "projects/cycles/photos-web/sun/DSCF3498.JPG",
-          "projects/cycles/photos-web/sun/DSCF3522.JPG",
-          "projects/cycles/photos-web/sun/DSCF3528.JPG",
+        series: [
+          {
+            name: "Relationship",
+            photos: [
+              "projects/cycles/photos-web/relationship/DSCF1830.JPG",
+              "projects/cycles/photos-web/relationship/DSCF2208.JPG",
+              "projects/cycles/photos-web/relationship/DSCF2221.JPG",
+              "projects/cycles/photos-web/relationship/DSCF2381.JPG",
+              "projects/cycles/photos-web/relationship/DSCF2690.jpeg"
+            ]
+          },
+          {
+            name: "Sun",
+            photos: [
+              "projects/cycles/photos-web/sun/DSCF3459.JPG",
+              "projects/cycles/photos-web/sun/DSCF3498.JPG",
+              "projects/cycles/photos-web/sun/DSCF3522.JPG",
+              "projects/cycles/photos-web/sun/DSCF3528.JPG"
+            ]
+          }
         ]
       }
     };
 
-    let current = { key: null, index: 0 };
-
-    const viewerImg = document.querySelector('.viewer-img');
-    const prevBtn = document.querySelector('.arrow-prev');
-    const nextBtn = document.querySelector('.arrow-next');
-
-    function showPhoto(key, index) {
+    function renderProject(key) {
       const project = projects[key];
-      const photos = project.photos;
-      current.key = key;
-      current.index = ((index % photos.length) + photos.length) % photos.length;
+      const container = document.getElementById('project-content');
+      container.innerHTML = '';
 
-      viewerImg.src = photos[current.index];
-      viewerImg.alt = project.title;
-      viewerImg.style.display = '';
+      project.series.forEach(series => {
+        const section = document.createElement('div');
+        section.className = 'series-section';
 
-      prevBtn.style.display = '';
-      nextBtn.style.display = '';
-    }
+        const label = document.createElement('p');
+        label.className = 'series-label';
+        label.textContent = series.name;
+        section.appendChild(label);
 
-    function openProject(key) {
-      document.querySelectorAll('.project-row').forEach(row => {
-        row.classList.toggle('active', row.dataset.project === key);
+        const wrapper = document.createElement('div');
+        wrapper.className = 'carousel-wrapper';
+
+        const track = document.createElement('div');
+        track.className = 'carousel-track';
+
+        series.photos.forEach(src => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = series.name;
+          track.appendChild(img);
+        });
+
+        const arrow = document.createElement('button');
+        arrow.className = 'carousel-arrow';
+        arrow.innerHTML = '&#8594;';
+        arrow.addEventListener('click', () => {
+          const maxScroll = track.scrollWidth - track.clientWidth;
+          if (track.scrollLeft >= maxScroll - 1) {
+            track.scrollTo({ left: 0, behavior: 'smooth' });
+          } else {
+            track.scrollBy({ left: 320, behavior: 'smooth' });
+          }
+        });
+
+        wrapper.appendChild(track);
+        wrapper.appendChild(arrow);
+        section.appendChild(wrapper);
+        container.appendChild(section);
       });
-      showPhoto(key, 0);
     }
 
     document.querySelectorAll('.project-row').forEach(row => {
-      row.addEventListener('click', () => openProject(row.dataset.project));
+      row.addEventListener('click', () => {
+        document.querySelectorAll('.project-row').forEach(r => r.classList.remove('active'));
+        row.classList.add('active');
+        renderProject(row.dataset.project);
+      });
     });
 
-    prevBtn.addEventListener('click', () => {
-      if (current.key) showPhoto(current.key, current.index - 1);
-    });
-
-    nextBtn.addEventListener('click', () => {
-      if (current.key) showPhoto(current.key, current.index + 1);
-    });
-
-    document.addEventListener('keydown', e => {
-      if (!current.key) return;
-      if (e.key === 'ArrowLeft') showPhoto(current.key, current.index - 1);
-      if (e.key === 'ArrowRight') showPhoto(current.key, current.index + 1);
-    });
+    // Auto-render cycles on load
+    renderProject('cycles');
   </script>
 </body>
 </html>
