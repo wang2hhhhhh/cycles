@@ -5,69 +5,93 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jun — Work</title>
   <link rel="stylesheet" href="style.css">
-  <style>
-    main {
-      padding: 60px 48px 80px;
-      max-width: 800px;
-    }
-
-    .project-group {
-      margin-bottom: 48px;
-    }
-
-    .group-label {
-      font-size: 11px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: #bbb;
-      margin-bottom: 12px;
-    }
-
-    .project-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      padding: 10px 0;
-      border-bottom: 1px solid #f5f5f5;
-    }
-
-    .project-row:first-of-type {
-      border-top: 1px solid #f5f5f5;
-    }
-
-    .project-name {
-      font-size: 13px;
-      color: #111;
-      text-decoration: none;
-    }
-
-    .project-name:hover {
-      color: #555;
-    }
-
-    .project-name.placeholder {
-      color: #ccc;
-    }
-
-    .project-year {
-      font-size: 11px;
-      color: #ccc;
-    }
-  </style>
 </head>
 <body>
-  <nav>
-    <a href="index.html" class="site-name">Jun</a>
-    <div class="nav-links">
-      <a href="index.html" class="active">Work</a>
-      <a href="info.html">Info</a>
-    </div>
-  </nav>
-  <main>
-    <div class="project-row">
-      <a href="projects/cycles/" class="project-name">Cycles</a>
-      <span class="project-year">2024</span>
-    </div>
-  </main>
+  <div class="layout">
+    <aside class="sidebar">
+      <a href="index.html" class="site-name">Jun</a>
+      <nav class="sidebar-nav">
+        <a href="index.html" class="active">Work</a>
+        <a href="info.html">Info</a>
+      </nav>
+      <div class="project-list">
+        <div class="project-row" data-project="cycles">
+          <span class="project-name">Cycles</span>
+          <span class="project-year">2024</span>
+        </div>
+      </div>
+    </aside>
+
+    <main class="viewer">
+      <img class="viewer-img" src="" alt="" style="display:none">
+      <button class="arrow arrow-prev" aria-label="Previous photo">&#8592;</button>
+      <button class="arrow arrow-next" aria-label="Next photo">&#8594;</button>
+    </main>
+  </div>
+
+  <script>
+    const projects = {
+      cycles: {
+        title: "Cycles",
+        year: "2024",
+        photos: [
+          "projects/cycles/photos-web/relationship/DSCF1830.JPG",
+          "projects/cycles/photos-web/relationship/DSCF2208.JPG",
+          "projects/cycles/photos-web/relationship/DSCF2221.JPG",
+          "projects/cycles/photos-web/relationship/DSCF2381.JPG",
+          "projects/cycles/photos-web/relationship/DSCF2690.jpeg",
+          "projects/cycles/photos-web/sun/DSCF3459.JPG",
+          "projects/cycles/photos-web/sun/DSCF3498.JPG",
+          "projects/cycles/photos-web/sun/DSCF3522.JPG",
+          "projects/cycles/photos-web/sun/DSCF3528.JPG",
+        ]
+      }
+    };
+
+    let current = { key: null, index: 0 };
+
+    const viewerImg = document.querySelector('.viewer-img');
+    const prevBtn = document.querySelector('.arrow-prev');
+    const nextBtn = document.querySelector('.arrow-next');
+
+    function showPhoto(key, index) {
+      const project = projects[key];
+      const photos = project.photos;
+      current.key = key;
+      current.index = ((index % photos.length) + photos.length) % photos.length;
+
+      viewerImg.src = photos[current.index];
+      viewerImg.alt = project.title;
+      viewerImg.style.display = '';
+
+      prevBtn.style.display = '';
+      nextBtn.style.display = '';
+    }
+
+    function openProject(key) {
+      document.querySelectorAll('.project-row').forEach(row => {
+        row.classList.toggle('active', row.dataset.project === key);
+      });
+      showPhoto(key, 0);
+    }
+
+    document.querySelectorAll('.project-row').forEach(row => {
+      row.addEventListener('click', () => openProject(row.dataset.project));
+    });
+
+    prevBtn.addEventListener('click', () => {
+      if (current.key) showPhoto(current.key, current.index - 1);
+    });
+
+    nextBtn.addEventListener('click', () => {
+      if (current.key) showPhoto(current.key, current.index + 1);
+    });
+
+    document.addEventListener('keydown', e => {
+      if (!current.key) return;
+      if (e.key === 'ArrowLeft') showPhoto(current.key, current.index - 1);
+      if (e.key === 'ArrowRight') showPhoto(current.key, current.index + 1);
+    });
+  </script>
 </body>
 </html>
