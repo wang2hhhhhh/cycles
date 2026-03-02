@@ -293,3 +293,99 @@ body {
   max-height: 90%;
   object-fit: contain;
 }
+
+/* ── Mobile responsive ── */
+
+@media (max-width: 768px) {
+  .layout {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: relative;
+    border-right: none;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 16px 20px;
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .site-name {
+    font-size: 18px;
+    margin: 0;
+    margin-right: auto;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    flex: none;
+  }
+
+  .nav-group {
+    flex-direction: row;
+    gap: 16px;
+  }
+
+  .nav-item {
+    padding: 4px 0;
+  }
+
+  .nav-bottom {
+    margin-top: 0;
+  }
+
+  .sidebar-social {
+    margin-top: 0;
+    gap: 10px;
+  }
+
+  .projects-dropdown {
+    padding-left: 8px;
+    flex-direction: row;
+    gap: 12px;
+  }
+
+  .main-content {
+    height: auto;
+    padding: 24px 0;
+  }
+
+  .carousel-track {
+    padding: 0 16px;
+  }
+
+  .carousel-track img {
+    height: 200px !important;
+    max-height: 200px;
+  }
+
+  .series-label {
+    padding: 0 16px 12px;
+  }
+
+  .project-header {
+    padding: 0 16px 24px;
+  }
+
+  .lightbox {
+    left: 0;
+  }
+
+  .info-content {
+    height: auto;
+    padding: 24px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 32px;
+  }
+
+  .info-portrait {
+    width: 100%;
+  }
+}
