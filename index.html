@@ -3,22 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jun — Work</title>
+  <title>Jun Wang</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="layout">
     <aside class="sidebar">
       <a href="index.html" class="site-name">Jun Wang</a>
-      <div class="sidebar-nav">
-        <a href="index.html" class="active">Work</a>
-        <a href="info.html">Info</a>
-      </div>
-      <div class="project-list">
-        <div class="project-row active" data-project="cycles">
-          <span class="project-name">Cycles</span>
+
+      <nav class="sidebar-nav">
+        <div class="nav-group">
+          <a href="#" class="nav-item projects-toggle">Projects</a>
+          <div class="projects-dropdown">
+            <a href="#" class="sub-item" data-project="cycles">Cycles</a>
+          </div>
         </div>
-      </div>
+
+        <div class="nav-bottom">
+          <a href="info.html" class="nav-item">Info</a>
+        </div>
+      </nav>
+
       <div class="sidebar-social">
         <a href="https://www.instagram.com/wang2hhhhh" target="_blank" rel="noopener" aria-label="Instagram">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>
@@ -62,12 +67,22 @@
       }
     };
 
+    // Toggle projects dropdown
+    const toggle = document.querySelector('.projects-toggle');
+    const dropdown = document.querySelector('.projects-dropdown');
+
+    toggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      const isOpen = dropdown.classList.toggle('open');
+      toggle.classList.toggle('active', isOpen);
+    });
+
+    // Render project
     function renderProject(key) {
       const project = projects[key];
       const container = document.getElementById('project-content');
       container.innerHTML = '';
 
-      // Project header
       const header = document.createElement('div');
       header.className = 'project-header';
       const title = document.createElement('h2');
@@ -126,16 +141,15 @@
       });
     }
 
-    document.querySelectorAll('.project-row').forEach(row => {
-      row.addEventListener('click', () => {
-        document.querySelectorAll('.project-row').forEach(r => r.classList.remove('active'));
-        row.classList.add('active');
-        renderProject(row.dataset.project);
+    // Sub-item click
+    document.querySelectorAll('.sub-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        renderProject(item.dataset.project);
       });
     });
-
-    // Auto-render cycles on load
-    renderProject('cycles');
   </script>
 </body>
 </html>
