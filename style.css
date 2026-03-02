@@ -31,12 +31,14 @@ body {
 }
 
 .site-name {
-  font-size: 18px;
+  font-size: 24px;
+  line-height: 1.3;
   font-weight: 400;
   letter-spacing: 0.15em;
   text-transform: uppercase;
   color: #111;
   text-decoration: none;
+  margin-top: 80px;
   margin-bottom: 40px;
   align-self: flex-start;
 }
