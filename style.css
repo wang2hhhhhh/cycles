@@ -338,6 +338,9 @@ body {
   }
 
   .site-name-mobile {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     font-size: 18px;
     font-weight: 400;
     letter-spacing: 0.15em;
