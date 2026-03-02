@@ -294,61 +294,95 @@ body {
   object-fit: contain;
 }
 
+/* ── Mobile banner + hamburger (hidden on desktop) ── */
+
+.mobile-banner {
+  display: none;
+}
+
+.sidebar-overlay {
+  display: none;
+}
+
 /* ── Mobile responsive ── */
 
 @media (max-width: 768px) {
-  .layout {
+  .mobile-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: #fff;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .hamburger {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    display: flex;
     flex-direction: column;
+    gap: 5px;
+  }
+
+  .hamburger span {
+    display: block;
+    width: 20px;
+    height: 2px;
+    background: #111;
+    border-radius: 1px;
+  }
+
+  .site-name-mobile {
+    font-size: 18px;
+    font-weight: 400;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #111;
+    text-decoration: none;
   }
 
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 1px solid #f0f0f0;
-    padding: 16px 20px;
-    flex-direction: row;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
+    position: fixed;
+    left: -240px;
+    top: 0;
+    width: 240px;
+    height: 100vh;
+    z-index: 1100;
+    background: #fff;
+    transition: left 0.3s ease;
+    border-right: 1px solid #f0f0f0;
   }
 
-  .site-name {
-    font-size: 18px;
-    margin: 0;
-    margin-right: auto;
+  .sidebar.open {
+    left: 0;
   }
 
-  .sidebar-nav {
-    flex-direction: row;
-    align-items: center;
-    gap: 16px;
-    flex: none;
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 1050;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
   }
 
-  .nav-group {
-    flex-direction: row;
-    gap: 16px;
+  .sidebar-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
   }
 
-  .nav-item {
-    padding: 4px 0;
-  }
-
-  .nav-bottom {
-    margin-top: 0;
-  }
-
-  .sidebar-social {
-    margin-top: 0;
-    gap: 10px;
-  }
-
-  .projects-dropdown {
-    padding-left: 8px;
-    flex-direction: row;
-    gap: 12px;
+  .layout {
+    flex-direction: column;
   }
 
   .main-content {

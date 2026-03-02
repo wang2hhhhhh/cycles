@@ -8,6 +8,13 @@
 </head>
 <body>
   <div class="layout">
+    <div class="mobile-banner">
+      <button class="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="index.html" class="site-name-mobile">Jun Wang</a>
+    </div>
+
     <aside class="sidebar">
       <a href="index.html" class="site-name">Jun<br>Wang</a>
 
@@ -31,6 +38,8 @@
       </div>
     </aside>
 
+    <div class="sidebar-overlay"></div>
+
     <main class="info-content">
       <div class="info-text">
         <h1 class="info-name">Jun</h1>
@@ -52,5 +61,21 @@
       </div>
     </main>
   </div>
+
+  <script>
+    const hamburger = document.querySelector('.hamburger');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    hamburger.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
+  </script>
 </body>
 </html>

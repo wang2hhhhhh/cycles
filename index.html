@@ -8,6 +8,13 @@
 </head>
 <body>
   <div class="layout">
+    <div class="mobile-banner">
+      <button class="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <a href="index.html" class="site-name-mobile">Jun Wang</a>
+    </div>
+
     <aside class="sidebar">
       <a href="index.html" class="site-name">Jun<br>Wang</a>
 
@@ -33,6 +40,8 @@
         </a>
       </div>
     </aside>
+
+    <div class="sidebar-overlay"></div>
 
     <main class="main-content" id="project-content"></main>
   </div>
@@ -152,6 +161,21 @@
         container.appendChild(section);
       });
     }
+
+    // Hamburger menu toggle
+    const hamburger = document.querySelector('.hamburger');
+    const sidebar = document.querySelector('.sidebar');
+    const overlay = document.querySelector('.sidebar-overlay');
+
+    hamburger.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('open');
+    });
+
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('open');
+    });
 
     // Sub-item click
     document.querySelectorAll('.sub-item').forEach(item => {
