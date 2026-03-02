@@ -9,7 +9,7 @@
 <body>
   <div class="layout">
     <aside class="sidebar">
-      <a href="index.html" class="site-name">Jun</a>
+      <span class="site-name">Jun Wang</span>
       <div class="sidebar-nav">
         <a href="index.html" class="active">Work</a>
         <a href="info.html">Info</a>
@@ -19,6 +19,14 @@
           <span class="project-name">Cycles</span>
           <span class="project-year">2024</span>
         </div>
+      </div>
+      <div class="sidebar-social">
+        <a href="https://www.instagram.com/wang2hhhhh" target="_blank" rel="noopener" aria-label="Instagram">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="5"/><circle cx="17.5" cy="6.5" r="1.5"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/in/jun-wang-501159133" target="_blank" rel="noopener" aria-label="LinkedIn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+        </a>
       </div>
     </aside>
 
@@ -30,6 +38,7 @@
       cycles: {
         title: "Cycles",
         year: "2024",
+        description: "Nothing is new under the sun \u2014 history only repeats itself in mysterious cycles. This project is my way of discovering and consolidating the cycles I fantasize about \u2014 from everyday repeating objects to the cycles we live through in our relationships, our bodies, and the systems around us.",
         series: [
           {
             name: "Relationship",
@@ -58,6 +67,21 @@
       const project = projects[key];
       const container = document.getElementById('project-content');
       container.innerHTML = '';
+
+      // Project header
+      const header = document.createElement('div');
+      header.className = 'project-header';
+      const title = document.createElement('h2');
+      title.className = 'project-title';
+      title.textContent = project.title;
+      header.appendChild(title);
+      if (project.description) {
+        const desc = document.createElement('p');
+        desc.className = 'project-description';
+        desc.textContent = project.description;
+        header.appendChild(desc);
+      }
+      container.appendChild(header);
 
       project.series.forEach(series => {
         const section = document.createElement('div');

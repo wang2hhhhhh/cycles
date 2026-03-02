@@ -27,6 +27,17 @@ body {
   display: flex;
   flex-direction: column;
   gap: 24px;
+  position: sticky;
+  top: 0;
+}
+
+.site-name {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: #111;
+  text-decoration: none;
 }
 
 .sidebar-nav {
@@ -202,3 +213,42 @@ body {
 
 .info-portrait { width: 280px; flex-shrink: 0; }
 .info-portrait img { width: 100%; display: block; object-fit: cover; }
+
+/* ── Sidebar social icons ── */
+
+.sidebar-social {
+  margin-top: auto;
+  display: flex;
+  gap: 12px;
+}
+
+.sidebar-social a {
+  color: #ccc;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+}
+
+.sidebar-social a:hover { color: #111; }
+
+/* ── Project header ── */
+
+.project-header {
+  padding: 0 48px 32px;
+}
+
+.project-title {
+  font-size: 18px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #111;
+  margin-bottom: 12px;
+}
+
+.project-description {
+  font-size: 12px;
+  line-height: 1.8;
+  color: #aaa;
+  max-width: 560px;
+}
