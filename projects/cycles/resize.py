@@ -8,6 +8,7 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 PHOTOS_DIR = os.path.join(BASE, "cycles_export")
 OUTPUT_DIR = os.path.join(BASE, "photos-web")
 MAX_EDGE = 1500
+JPEG_QUALITY = 70
 
 
 def resize_photos():
@@ -35,7 +36,9 @@ def resize_photos():
             dst = os.path.join(dst_dir, filename)
 
             subprocess.run(
-                ["sips", "--resampleHeightWidthMax", str(MAX_EDGE), src, "--out", dst],
+                ["sips", "--resampleHeightWidthMax", str(MAX_EDGE),
+                 "-s", "formatOptions", str(JPEG_QUALITY),
+                 src, "--out", dst],
                 check=True,
                 capture_output=True,
             )
