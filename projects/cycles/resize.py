@@ -5,7 +5,7 @@ import os
 import subprocess
 
 BASE = os.path.dirname(os.path.abspath(__file__))
-PHOTOS_DIR = os.path.join(BASE, "photos")
+PHOTOS_DIR = os.path.join(BASE, "cycles_export")
 OUTPUT_DIR = os.path.join(BASE, "photos-web")
 MAX_EDGE = 1500
 
