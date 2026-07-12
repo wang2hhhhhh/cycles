@@ -167,6 +167,23 @@ body {
 }
 .carousel-arrow:hover { color: #111; border-color: #ccc; }
 
+/* ── Big stacked photos (flat photo list, no carousel) ── */
+
+.photo-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 48px;
+  padding: 0 48px;
+}
+
+.photo-stack img {
+  width: 100%;
+  max-width: 1100px;
+  height: auto;
+  display: block;
+  cursor: pointer;
+}
+
 /* ── Info page ── */
 
 .info-content {
@@ -403,6 +420,11 @@ body {
 
   .series-label {
     padding: 0 16px 12px;
+  }
+
+  .photo-stack {
+    gap: 24px;
+    padding: 0 16px;
   }
 
   .project-header {

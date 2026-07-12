@@ -23,6 +23,7 @@
           <a href="#" class="nav-item projects-toggle">Photography</a>
           <div class="projects-dropdown">
             <a href="#" class="sub-item" data-project="cycles">Cycles</a>
+            <a href="#" class="sub-item" data-project="blank-out">Blank Out</a>
           </div>
         </div>
 
@@ -94,6 +95,33 @@
             ]
           }
         ]
+      },
+      "blank-out": {
+        title: "Blank Out",
+        year: "",
+        description: "",
+        photos: [
+          "projects/blank-out/photos-web/R0005862.JPG",
+          "projects/blank-out/photos-web/R0005867.JPG",
+          "projects/blank-out/photos-web/R0005868.JPG",
+          "projects/blank-out/photos-web/R0005869.JPG",
+          "projects/blank-out/photos-web/R0005870.JPG",
+          "projects/blank-out/photos-web/R0005873.JPG",
+          "projects/blank-out/photos-web/R0005876.JPG",
+          "projects/blank-out/photos-web/R0005877.JPG",
+          "projects/blank-out/photos-web/R0005878.JPG",
+          "projects/blank-out/photos-web/R0005881.JPG",
+          "projects/blank-out/photos-web/R0005909.JPG",
+          "projects/blank-out/photos-web/R0005912.JPG",
+          "projects/blank-out/photos-web/R0005914.JPG",
+          "projects/blank-out/photos-web/R0005916.JPG",
+          "projects/blank-out/photos-web/R0005917.JPG",
+          "projects/blank-out/photos-web/R0005919.JPG",
+          "projects/blank-out/photos-web/R0005920.JPG",
+          "projects/blank-out/photos-web/R0005922.JPG",
+          "projects/blank-out/photos-web/R0005924.JPG",
+          "projects/blank-out/photos-web/R0005925.JPG"
+        ]
       }
     };
 
@@ -135,7 +163,25 @@
       lightbox.addEventListener('click', () => lightbox.classList.remove('active'));
       container.appendChild(lightbox);
 
-      project.series.forEach(series => {
+      // Flat photo list: big stacked photos, no carousel
+      if (project.photos) {
+        const stack = document.createElement('div');
+        stack.className = 'photo-stack';
+        project.photos.forEach(src => {
+          const img = document.createElement('img');
+          img.src = src;
+          img.alt = project.title;
+          img.loading = 'lazy';
+          img.addEventListener('click', () => {
+            lightboxImg.src = src;
+            lightbox.classList.add('active');
+          });
+          stack.appendChild(img);
+        });
+        container.appendChild(stack);
+      }
+
+      (project.series || []).forEach(series => {
         const section = document.createElement('div');
         section.className = 'series-section';
 
