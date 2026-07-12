@@ -22,8 +22,8 @@
         <div class="nav-group">
           <a href="#" class="nav-item projects-toggle">Photography</a>
           <div class="projects-dropdown">
-            <a href="#" class="sub-item" data-project="cycles">Cycles</a>
-            <a href="#" class="sub-item" data-project="blank-out">Blank Out</a>
+            <a href="#cycles" class="sub-item" data-project="cycles">Cycles</a>
+            <a href="#blank-out" class="sub-item" data-project="blank-out">Blank Out</a>
           </div>
         </div>
 
@@ -244,15 +244,35 @@
       overlay.classList.remove('open');
     });
 
-    // Sub-item click
+    // Hash routing: each project has its own shareable URL (#cycles, #blank-out)
+    function renderFromHash() {
+      const key = decodeURIComponent(location.hash.slice(1));
+      const project = projects[key];
+      document.querySelectorAll('.sub-item').forEach(i =>
+        i.classList.toggle('active', i.dataset.project === key));
+      if (project) {
+        renderProject(key);
+        dropdown.classList.add('open');
+        toggle.classList.add('active');
+        document.title = 'Jun Wang — ' + project.title;
+        document.getElementById('project-content').scrollTop = 0;
+        window.scrollTo(0, 0);
+      } else {
+        document.getElementById('project-content').innerHTML = '';
+        document.title = 'Jun Wang';
+      }
+    }
+
+    // Close mobile sidebar after picking a project
     document.querySelectorAll('.sub-item').forEach(item => {
-      item.addEventListener('click', (e) => {
-        e.preventDefault();
-        document.querySelectorAll('.sub-item').forEach(i => i.classList.remove('active'));
-        item.classList.add('active');
-        renderProject(item.dataset.project);
+      item.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        overlay.classList.remove('open');
       });
     });
+
+    window.addEventListener('hashchange', renderFromHash);
+    renderFromHash();
   </script>
 </body>
 </html>
