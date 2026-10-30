@@ -30,6 +30,12 @@
             <a href="#blank-out" class="sub-item" data-project="blank-out">Blank Out</a>
           </div>
         </div>
+        <div class="nav-group">
+          <a href="#" class="nav-item projects-toggle">Ideas</a>
+          <div class="projects-dropdown">
+            <a href="#education" class="sub-item" data-project="education">Education</a>
+          </div>
+        </div>
 
         <div class="nav-bottom">
           <a href="info.html" class="nav-item">Info</a>
@@ -126,17 +132,23 @@
           "projects/blank-out/photos-web/R0005924.JPG",
           "projects/blank-out/photos-web/R0005925.JPG"
         ]
+      },
+      // Ideas: a whole page shown inside the site, also openable on its own
+      education: {
+        title: "DumplingDash",
+        year: "",
+        description: "A system design game: build a food delivery app, one decision at a time.",
+        embed: "ideas/education/dumplingdash.html"
       }
     };
 
-    // Toggle projects dropdown
-    const toggle = document.querySelector('.projects-toggle');
-    const dropdown = document.querySelector('.projects-dropdown');
-
-    toggle.addEventListener('click', (e) => {
-      e.preventDefault();
-      const isOpen = dropdown.classList.toggle('open');
-      toggle.classList.toggle('active', isOpen);
+    // Toggle each nav group's dropdown (Photography, Ideas)
+    document.querySelectorAll('.projects-toggle').forEach(toggle => {
+      toggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isOpen = toggle.nextElementSibling.classList.toggle('open');
+        toggle.classList.toggle('active', isOpen);
+      });
     });
 
     // Render project
@@ -144,6 +156,7 @@
       const project = projects[key];
       const container = document.getElementById('project-content');
       container.innerHTML = '';
+      container.classList.toggle('has-embed', Boolean(project.embed));
 
       const header = document.createElement('div');
       header.className = 'project-header';
@@ -157,7 +170,25 @@
         desc.textContent = project.description;
         header.appendChild(desc);
       }
+      if (project.embed) {
+        const fullPage = document.createElement('a');
+        fullPage.className = 'project-link';
+        fullPage.href = project.embed;
+        fullPage.target = '_blank';
+        fullPage.rel = 'noopener';
+        fullPage.textContent = 'Open full page \u2197';
+        header.appendChild(fullPage);
+      }
       container.appendChild(header);
+
+      if (project.embed) {
+        const frame = document.createElement('iframe');
+        frame.className = 'embed-frame';
+        frame.src = project.embed;
+        frame.title = project.title;
+        container.appendChild(frame);
+        return;
+      }
 
       // Lightbox
       const lightbox = document.createElement('div');
@@ -256,13 +287,16 @@
         i.classList.toggle('active', i.dataset.project === key));
       if (project) {
         renderProject(key);
-        dropdown.classList.add('open');
-        toggle.classList.add('active');
+        const group = document.querySelector(`.sub-item[data-project="${key}"]`).parentElement;
+        group.classList.add('open');
+        group.previousElementSibling.classList.add('active');
         document.title = 'Jun Wang — ' + project.title;
         document.getElementById('project-content').scrollTop = 0;
         window.scrollTo(0, 0);
       } else {
-        document.getElementById('project-content').innerHTML = '';
+        const container = document.getElementById('project-content');
+        container.innerHTML = '';
+        container.classList.remove('has-embed');
         document.title = 'Jun Wang';
       }
     }

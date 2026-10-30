@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>DumplingDash: a system design game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EAF0EB; --surface:#FFFFFF; --surface-2:#F4F7F4; --ink:#1D2A2E; --muted:#56676B; --line:#C9D5CE;
+  --jade:#2A7666; --on-jade:#FFFFFF; --jade-soft:#D5EAE2;
+  --saffron:#C98A10; --saffron-soft:#FBEFD2;
+  --bad:#B23B2F; --bad-soft:#F7DFDB;
+  --dot:#C3D0C8;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#10181B; --surface:#17242A; --surface-2:#1D2D33; --ink:#E3ECE8; --muted:#9BAFAA; --line:#2E434A;
+    --jade:#5FBCA6; --on-jade:#0D1D19; --jade-soft:#1C3A34;
+    --saffron:#F0BE4A; --saffron-soft:#372F1C;
+    --bad:#EE8B7F; --bad-soft:#3D2321;
+    --dot:#26383E;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#10181B; --surface:#17242A; --surface-2:#1D2D33; --ink:#E3ECE8; --muted:#9BAFAA; --line:#2E434A;
+  --jade:#5FBCA6; --on-jade:#0D1D19; --jade-soft:#1C3A34;
+  --saffron:#F0BE4A; --saffron-soft:#372F1C;
+  --bad:#EE8B7F; --bad-soft:#3D2321;
+  --dot:#26383E;
+  color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;font-size:17px;line-height:1.55;-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;line-height:1.12;letter-spacing:-0.012em;margin:0}
+p{margin:0}
+code,pre{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+code{font-size:.88em;background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:1px 5px;white-space:nowrap}
+pre{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;font-size:.86rem;line-height:1.6;overflow-x:auto;margin:12px 0 0}
+pre code{background:none;border:0;padding:0;white-space:pre;font-size:inherit}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--jade);outline-offset:2px}
+
+/* top bar */
+.top{max-width:1180px;margin:0 auto;padding:18px 20px 0;display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap}
+.brand{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.brand b{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:1.25rem;letter-spacing:-0.02em}
+.brand span{color:var(--muted);font-size:.95rem}
+.xp{display:flex;align-items:center;gap:10px;font-size:.92rem;color:var(--muted)}
+.xp strong{color:var(--ink)}
+.xp-bar{width:130px;height:8px;background:var(--line);border-radius:4px;overflow:hidden}
+.xp-fill{height:100%;background:var(--saffron);width:0;transition:width .5s ease}
+
+/* level track: a real sequence, so numbered */
+.track{max-width:1180px;margin:14px auto 0;padding:0 20px;overflow-x:auto}
+.track ol{display:flex;gap:6px;list-style:none;margin:0;padding:0 0 8px;min-width:max-content}
+.track button{display:flex;align-items:center;gap:8px;background:transparent;border:1.5px solid var(--line);border-radius:999px;padding:6px 12px 6px 6px;cursor:pointer;font-size:.88rem;white-space:nowrap}
+.track button .n{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:50%;background:var(--surface-2);font-weight:700;font-size:.8rem}
+.track button.done{border-color:var(--jade)}
+.track button.done .n{background:var(--jade);color:var(--on-jade)}
+.track button.current{border-color:var(--ink);background:var(--surface)}
+.track button:disabled{opacity:.45;cursor:not-allowed}
+
+/* layout */
+.app{max-width:1180px;margin:0 auto;padding:22px 20px 96px;display:grid;grid-template-columns:minmax(0,1fr) 410px;gap:36px;align-items:start}
+main{min-width:0;max-width:700px}
+aside{position:sticky;top:calc(14px + env(safe-area-inset-top,0px))}
+
+/* intro */
+.intro h1{font-size:clamp(2.1rem,5vw,3.4rem);font-weight:800;letter-spacing:-0.03em;max-width:15ch}
+.intro .lede{font-size:1.15rem;margin-top:16px;max-width:58ch}
+.intro .how{margin-top:14px;color:var(--muted);max-width:58ch}
+.steps{margin:26px 0 0;padding:0;list-style:none;counter-reset:s;display:grid;gap:2px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:34px 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.steps li::before{content:counter(s);font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:1.25rem;color:var(--jade)}
+.steps li b{display:block}
+.steps li span{color:var(--muted);font-size:.95rem}
+
+/* level */
+.lvl-meta{color:var(--muted);font-size:.95rem}
+.lvl-head h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:800;margin-top:6px;letter-spacing:-0.025em}
+.story{margin-top:18px;background:var(--saffron-soft);border-left:4px solid var(--saffron);border-radius:0 12px 12px 0;padding:14px 18px;font-size:1.05rem}
+.lessons{margin-top:26px}
+.lessons h2,.challenges h2,.after h2{font-size:1.3rem;font-weight:700}
+.lesson{padding:16px 0;border-top:1px solid var(--line)}
+.lesson:first-of-type{margin-top:10px}
+.lesson h3{font-size:1.12rem;font-weight:700}
+.lesson p{margin-top:6px}
+.analogy{margin-top:10px;background:var(--jade-soft);border-radius:10px;padding:10px 14px;font-size:.97rem}
+.analogy b{margin-right:4px}
+
+.challenges{margin-top:30px}
+.challenge{margin-top:14px;background:var(--surface);border:1px solid var(--line);border-top:4px solid var(--jade);border-radius:6px 6px 14px 14px;padding:18px 20px 20px}
+.challenge:focus{outline:none}
+.c-count{font-size:.85rem;color:var(--muted)}
+.q{font-weight:700;font-size:1.08rem;margin-top:4px}
+.opts{margin-top:12px;display:grid;gap:10px}
+.opt{display:block;width:100%;text-align:left;background:var(--surface-2);border:1.5px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;line-height:1.45}
+button.opt:hover{border-color:var(--jade)}
+.opt.answered{cursor:default}
+.opt.g-best{border-color:var(--jade);background:var(--jade-soft)}
+.opt.g-ok{border-color:var(--saffron);background:var(--saffron-soft)}
+.opt.g-bad{opacity:.85}
+.opt.chosen.g-bad{border-color:var(--bad);background:var(--bad-soft);opacity:1}
+.opt.chosen{box-shadow:0 0 0 2px var(--ink) inset}
+.verdict{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px;font-size:.85rem;font-weight:700}
+.pill{border-radius:999px;padding:2px 10px;border:1.5px solid currentColor}
+.g-best .pill.grade{color:var(--jade)}
+.g-ok .pill.grade{color:var(--saffron)}
+.g-bad .pill.grade{color:var(--bad)}
+.pill.you{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.why{margin-top:6px;font-size:.96rem}
+.gain{margin-top:12px;font-weight:700;color:var(--saffron)}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{border:1.5px solid var(--line);background:var(--surface-2);border-radius:999px;padding:8px 14px;cursor:pointer;text-align:left}
+.chip[aria-pressed="true"]{background:var(--jade);border-color:var(--jade);color:var(--on-jade)}
+.chip:hover{border-color:var(--jade)}
+.res{list-style:none;padding:0;margin:12px 0 0;display:grid;gap:8px}
+.res li{display:grid;grid-template-columns:26px 1fr;gap:8px;padding:10px 12px;border-radius:10px;background:var(--surface-2);border:1.5px solid var(--line)}
+.res li.right{border-color:var(--jade)}
+.res li.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.res .mark{font-weight:800;font-size:1.05rem;line-height:1.3}
+.res li.right .mark{color:var(--jade)}
+.res li.wrong .mark{color:var(--bad)}
+.res .tag{font-size:.8rem;font-weight:700;border-radius:999px;padding:1px 8px;margin-left:6px;border:1.5px solid var(--muted);color:var(--muted);white-space:nowrap}
+.res small{display:block;margin-top:3px;font-size:.93rem}
+
+.slots{margin:12px 0 0;padding-left:1.6em;display:grid;gap:6px}
+.slots li{padding:8px 12px;border-radius:8px;background:var(--jade-soft);border:1.5px solid var(--jade)}
+.slots li.empty{background:transparent;border:1.5px dashed var(--line);color:var(--muted)}
+.pool{display:grid;gap:8px;margin-top:14px}
+.step{display:block;width:100%;text-align:left;background:var(--surface-2);border:1.5px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+.step:hover{border-color:var(--jade)}
+.step.shake{border-color:var(--bad);animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+.hint{margin-top:10px;font-size:.93rem;color:var(--muted);min-height:1.4em}
+.hint.warn{color:var(--bad)}
+
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--jade);color:var(--on-jade);border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--jade);border:1.5px solid var(--jade)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.after{margin-top:30px;padding-top:18px;border-top:1px solid var(--line)}
+.after p{margin-top:8px}
+.foot{margin-top:28px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.foot .note{color:var(--muted);font-size:.93rem}
+
+/* final */
+.rank{margin-top:22px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+.rank .big{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:800;font-size:2.4rem;line-height:1;color:var(--saffron)}
+.rank b{font-size:1.15rem}
+.final h2{margin-top:32px;font-size:1.35rem}
+.tbl{overflow-x:auto;margin-top:12px}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:.95rem}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700}
+td:first-child{font-weight:700}
+
+/* system map panel */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.panel summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
+.panel summary::-webkit-details-marker{display:none}
+.panel summary h2{font-size:1.15rem;font-weight:700}
+.panel summary span{color:var(--muted);font-size:.9rem}
+.map{background-color:var(--surface-2);background-image:radial-gradient(var(--dot) 1.1px,transparent 1.3px);background-size:16px 16px;padding:12px}
+.map svg{display:block;width:100%;height:auto}
+.node{opacity:0;transition:opacity .4s}
+.node.on{opacity:1}
+.node .box{fill:var(--surface);stroke:var(--ink);stroke-width:1.4}
+.node .stack{fill:var(--surface);stroke:var(--muted);stroke-width:1.2;opacity:0;transition:opacity .4s}
+.node.multi .stack{opacity:1}
+.nlabel{font:700 12.5px "Atkinson Hyperlegible",system-ui,sans-serif;fill:var(--ink);text-anchor:middle}
+.nsub{font:400 10.5px "Atkinson Hyperlegible",system-ui,sans-serif;fill:var(--muted);text-anchor:middle}
+.node.pop{animation:pop .7s cubic-bezier(.2,1.5,.4,1)}
+.node.pop .box{stroke:var(--jade);stroke-width:2.4}
+.node,.node .box{transform-box:fill-box;transform-origin:center}
+@keyframes pop{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:scale(1)}}
+.node.lit .box{fill:var(--saffron-soft);stroke:var(--saffron);stroke-width:2.4}
+.edge{stroke:var(--muted);stroke-width:1.4;fill:none;opacity:0;transition:opacity .6s}
+.edge.on{opacity:1}
+.edge.dash{stroke-dasharray:4 4}
+.scale{opacity:0;transition:opacity .5s}
+.scale.on{opacity:1}
+.scale rect{fill:var(--saffron-soft);stroke:var(--saffron);stroke-dasharray:4 3}
+.scale .t1{font:700 11.5px "Atkinson Hyperlegible",sans-serif;fill:var(--ink)}
+.scale .t2{font:400 11px "Atkinson Hyperlegible",sans-serif;fill:var(--ink)}
+#dot{fill:var(--saffron);stroke:var(--surface);stroke-width:2;opacity:0}
+.panel-foot{padding:12px 16px 16px;border-top:1px solid var(--line)}
+.trace-cap{font-size:.93rem;min-height:2.9em}
+.panel-foot .btn{margin-top:10px;padding:9px 14px;font-size:.92rem}
+
+/* toast */
+.toast-wrap{position:fixed;left:0;right:0;bottom:0;padding:0 16px calc(18px + env(safe-area-inset-bottom,0px));display:flex;justify-content:center;pointer-events:none;z-index:20}
+.toast{background:var(--ink);color:var(--surface);border-radius:12px;padding:12px 18px;max-width:520px;font-weight:700;box-shadow:0 8px 30px rgba(0,0,0,.25);opacity:0;transform:translateY(16px);transition:opacity .3s,transform .3s}
+.toast.show{opacity:1;transform:none}
+
+@media (max-width:920px){
+  .app{grid-template-columns:1fr;gap:22px}
+  aside{position:static;order:-1}
+  main{max-width:none}
+  body{font-size:16px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand"><b>DumplingDash</b><span>a system design game</span></div>
+  <div class="xp" aria-live="polite"><span><strong id="xpNow">0</strong> / <span id="xpMax">0</span> XP</span><div class="xp-bar" aria-hidden="true"><div class="xp-fill" id="xpFill"></div></div></div>
+</header>
+<nav class="track" aria-label="Levels"><ol id="track"></ol></nav>
+
+<div class="app">
+  <main id="main" tabindex="-1"></main>
+  <aside>
+    <details class="panel" open>
+      <summary><h2>Your system</h2><span id="partCount">0 parts</span></summary>
+      <div class="map"><svg id="map" viewBox="0 0 420 400" role="img" aria-label="Architecture diagram that grows as you finish levels"></svg></div>
+      <div class="panel-foot">
+        <p class="trace-cap" id="traceCap" aria-live="polite"></p>
+        <button class="btn" id="traceBtn" data-act="trace" hidden>Trace an order</button>
+      </div>
+    </details>
+  </aside>
+</div>
+<div class="toast-wrap"><div class="toast" id="toast" role="status"></div></div>
+
+<script>
+/* ---------- content ---------- */
+const LEVELS = [
+{
+  id:'req', title:'What are we building?', step:'Requirements',
+  story:'Mrs. Lin’s dumpling shop is a hit. She wants an app where people can order delivery from her and 200 other neighborhood restaurants. You’re the engineer. Before drawing a single box, you ask questions.',
+  lessons:[
+    {t:'Features: what it does', b:'Start by listing the actions people take. These are the verbs: a customer <b>browses</b> menus, <b>places</b> an order, <b>pays</b>. Engineers call these functional requirements.', e:'Listing the rooms before you build a house: kitchen, bedroom, bathroom.'},
+    {t:'Qualities: how well it does it', b:'Next, decide what “good” means. Fast? Always on? Never wrong about money? These are non-functional requirements, and they drive most of the big design choices later.', e:'The house should be warm, quiet and not fall down. Nobody lists that as a room, but it changes how you build every room.'},
+    {t:'Version 1 is small on purpose', b:'Every feature costs time to build and is one more thing that can break. Pick the smallest set that lets a real customer get real dumplings.', e:'A food truck with five dishes comes before the restaurant with fifty.'}
+  ],
+  challenges:[
+    {id:'req1', type:'multi', q:'Pick the features for version 1. Only what’s needed for the first real order.', items:[
+      {t:'Browse restaurants and menus', core:true, why:'No menu, no order.'},
+      {t:'Place an order', core:true, why:'This is the whole point.'},
+      {t:'Pay by card', core:true, why:'Restaurants need to get paid.'},
+      {t:'See order status (received, cooking, on the way)', core:true, why:'Without it, customers phone the restaurant asking where their food is.'},
+      {t:'Live map of the driver', core:false, why:'Lovely, but every driver’s phone must send GPS every few seconds. That’s a whole system of its own.'},
+      {t:'Loyalty points', core:false, why:'Brings customers back, but first you need customers.'},
+      {t:'Reviews and ratings', core:false, why:'Useful once there are enough orders to review.'},
+      {t:'AI dish recommendations', core:false, why:'Needs order history you don’t have yet.'}
+    ]},
+    {id:'req2', type:'single', q:'A customer pays for dinner. Which problem is worse?', options:[
+      {t:'Payment takes 2 seconds instead of half a second.', g:'bad', why:'Annoying, but they still get dinner and pay the right amount.'},
+      {t:'The customer is charged twice.', g:'best', why:'For money, being correct matters more than being fast. Remember this: it will shape your database and your API.'}
+    ]},
+    {id:'req3', type:'single', q:'Now the menu screen. What matters more there?', options:[
+      {t:'It loads instantly, even if a price is a minute out of date.', g:'best', why:'People browse a lot, and a slow menu loses them. A slightly old price is fine as long as you double-check it when they pay. You’ll build exactly that in level 6.'},
+      {t:'Every price is exact to the second, even if the page takes 4 seconds.', g:'bad', why:'Exact is nice, but people leave slow apps. You can check the exact price later, at checkout.'}
+    ]}
+  ],
+  unlock:'New in your system: the customer app. Every system starts with a person holding something.'
+},
+{
+  id:'est', title:'How busy will it get?', step:'Estimation',
+  story:'Mrs. Lin’s investor says: “Plan for 1 million customers.” Is that a lot? Before you choose any technology, you grab a napkin and do some rough math.',
+  lessons:[
+    {t:'Napkin math', b:'You don’t need exact numbers. You need to know roughly how big the problem is: 10 people or 10 million.', e:'Planning a party. Ten guests means your kitchen. A thousand guests means renting a hall. Same party, different plan.'},
+    {t:'A day has about 100,000 seconds', b:'It’s really 86,400, but 100,000 makes the math easy. So 100,000 things a day is about 1 thing per second.', e:'Round on purpose. Being off by 15% doesn’t change the design. Being off by 100× does.'},
+    {t:'Plan for the rush, not the average', b:'Everyone orders dinner around the same time. A common rule of thumb: the busiest moment is about 10× the average.', e:'A highway is empty at 3 a.m. and jammed at 5 p.m. You build lanes for 5 p.m.'}
+  ],
+  challenges:[
+    {id:'est1', type:'single', q:'1 million customers. About 1 in 10 orders on any given day. How many orders a day?', options:[
+      {t:'10,000', g:'bad', why:'That would be 1 in 100.'},
+      {t:'100,000', g:'best', why:'1,000,000 ÷ 10 = 100,000 orders a day.'},
+      {t:'1,000,000', g:'bad', why:'That’s every customer ordering every single day. The dumplings are good, but not that good.'}
+    ]},
+    {id:'est2', type:'single', q:'100,000 orders a day. About how many orders per second at the dinner rush?', options:[
+      {t:'About 1', g:'ok', why:'That’s the average (100,000 orders ÷ about 100,000 seconds). The rush is busier.'},
+      {t:'About 10', g:'best', why:'About 1 per second on average, times 10 for the rush. Surprise: that’s small. One ordinary database can handle thousands of saves per second. Don’t over-build.'},
+      {t:'About 10,000', g:'bad', why:'Far too high. Designing for it would cost a fortune you don’t need to spend.'}
+    ]},
+    {id:'est3', type:'single', q:'For every order, a customer opens about 20 menu pages. What does that tell you?', options:[
+      {t:'The app mostly reads (looks at) data, so make reading fast.', g:'best', why:'About 200 menu views a second at the rush, versus 10 orders. Systems that read far more than they write love caches. Hold on to this for level 6.'},
+      {t:'The app mostly writes (saves) data, so make saving fast.', g:'bad', why:'Saving happens once per order. Looking happens 20 times.'},
+      {t:'Nothing. A page is a page.', g:'bad', why:'The reading-to-writing ratio is one of the most useful numbers in system design. It tells you where to spend your effort.'}
+    ]}
+  ],
+  unlock:'New on your map: a traffic estimate. Every later choice gets checked against it.'
+},
+{
+  id:'api', title:'The order counter', step:'API design',
+  story:'The app on the phone and the server in the cloud need a shared language. Before writing any server code, you decide exactly what the app is allowed to ask for.',
+  lessons:[
+    {t:'An API is the order counter', b:'The phone app can’t reach into the server’s database. It can only ask for things the server offers. That list of offers is the API.', e:'At a restaurant you don’t walk into the kitchen. You order from the counter menu, and the kitchen decides how to cook it.'},
+    {t:'Nouns and verbs', b:'Most web APIs follow a style called REST. Each URL names a thing (a noun), and the method is the action: <code>GET</code> looks, <code>POST</code> creates, <code>PATCH</code> changes part of it, <code>DELETE</code> removes.', e:'“Show me order 1042” becomes <code>GET /orders/1042</code>.'},
+    {t:'Asking twice should be safe', b:'Networks drop and phones retry. A good API makes repeating a request harmless. The engineering word for this is idempotent.', e:'Pressing the elevator button five times still brings one elevator.'}
+  ],
+  challenges:[
+    {id:'api1', type:'single', q:'A customer opens Mrs. Lin’s menu. Which request should the app send?', options:[
+      {t:'<code>GET /restaurants/42/menu</code>', g:'best', why:'Looking at something is a GET, and the URL names the thing. Bonus: GET requests can be cached, which will matter a lot in level 6.'},
+      {t:'<code>POST /getMenu?restaurant=42</code>', g:'ok', why:'It would work, but POST means “create something”. Caches and other engineers will treat it as a change, not a read.'},
+      {t:'<code>DELETE /restaurants/42</code>', g:'bad', why:'That removes Mrs. Lin’s restaurant. She would like a word.'}
+    ]},
+    {id:'api2', type:'single', q:'The customer taps “Place order”. Which request?', options:[
+      {t:'<code>POST /orders</code>, with the items and payment details in the request body', g:'best', why:'Creating a new order is a POST to the orders collection. The details travel in the body, not the URL.'},
+      {t:'<code>GET /orders?items=dumplings,soup</code>', g:'bad', why:'A GET must never change anything. Browsers, caches and retries feel free to repeat GETs, so you could get surprise extra orders.'},
+      {t:'<code>PATCH /restaurants/42</code>', g:'bad', why:'That edits the restaurant itself, not an order.'}
+    ]},
+    {id:'api3', type:'single', q:'The customer is staring at “Cooking…”. How does the app find out when the status changes?', options:[
+      {t:'The app asks <code>GET /orders/1042</code> every 10 seconds (polling).', g:'best', why:'The best pick for version 1. Simple to build, and at 10 orders a second the extra requests cost almost nothing. The price: updates can arrive up to 10 seconds late, and most checks find nothing new. Everyday version: the kid in the back seat asking “are we there yet?”'},
+      {t:'The server keeps an open line to the phone and pushes changes instantly (a WebSocket).', g:'ok', why:'Faster and less wasteful, but harder: thousands of open connections to manage, plus reconnecting whenever a phone switches networks. Worth it later for the live driver map. Everyday version: the parent saying “I’ll tell you when we’re there.”'},
+      {t:'The customer pulls down to refresh.', g:'bad', why:'Cheapest to build, but you’ve handed the work to a hungry customer.'}
+    ]},
+    {id:'api4', type:'single', q:'Bad Wi-Fi. The customer taps “Pay”, nothing seems to happen, so they tap again. How do you prevent a double charge?', options:[
+      {t:'When checkout opens, the app creates a unique ID (an idempotency key) and sends it with every try. The server remembers it: same key means same order, charged once.', g:'best', why:'This is how real payment APIs work. A second tap, an automatic retry, a network resend: all land on the same order.'},
+      {t:'Grey out the button after the first tap.', g:'ok', why:'Good to have, but not enough. If the app crashes and retries, or the network sends the request twice, the button can’t help. Use both.'},
+      {t:'Add a line to the FAQ: “please don’t tap twice”.', g:'bad', why:'Hope is not a design.'}
+    ]}
+  ],
+  after:'<h2>Your version 1 API</h2><p>Four requests are enough for everything you picked in level 1.</p><pre><code>GET    /restaurants/42/menu   see a menu\nPOST   /orders                place an order and pay\n                              (sends an idempotency key)\nGET    /orders/1042           check an order’s status\nPATCH  /orders/1042           restaurant marks “cooking”, “on the way”</code></pre>',
+  unlock:'New in your system: the API server. It’s the counter between the app and everything else.'
+},
+{
+  id:'data', title:'Where things live', step:'Data storage',
+  story:'Orders, menus, payments, food photos. They all need a home, and different kinds of things need different homes.',
+  lessons:[
+    {t:'SQL database: a strict filing cabinet', b:'Data lives in tables with fixed columns, and tables point to each other: an order belongs to a customer. It can make several changes as one all-or-nothing step, called a transaction. Postgres and MySQL are examples.', e:'A bank transfer. Money leaves your account and arrives in theirs. Both happen, or neither does.'},
+    {t:'NoSQL: flexible boxes', b:'Each record can have its own shape, and it’s easy to spread data across many machines. In exchange it usually gives up some of SQL’s strict rules. DynamoDB and MongoDB are examples.', e:'Moving boxes. Throw in whatever fits and stack them in any warehouse. Great for volume, worse for finding exactly the right fork.'},
+    {t:'Big files go in object storage', b:'Photos and videos go in cheap storage built for big files (such as Amazon S3). The database only keeps each file’s address.', e:'You don’t keep your sofa in the filing cabinet. You keep a note saying which storage unit it’s in.'}
+  ],
+  challenges:[
+    {id:'data1', type:'single', q:'Where should orders and payments live?', options:[
+      {t:'A SQL database such as Postgres', g:'best', why:'“Charge the card and save the order” must happen together, and you want clear links between customers, orders and restaurants. SQL gives you both for free. At 10 orders a second, one Postgres server is barely awake.'},
+      {t:'A NoSQL database', g:'ok', why:'Plenty of big companies do this, and it scales enormously. But you’d rebuild safety rules that SQL hands you for free, for a scale you don’t have yet.'},
+      {t:'A spreadsheet file on the server', g:'bad', why:'Two orders at the same moment would overwrite each other. Also, it’s a spreadsheet.'}
+    ]},
+    {id:'data2', type:'single', q:'Restaurants upload food photos, 2 to 5 MB each. Where do they go?', options:[
+      {t:'Object storage, with only each photo’s web address saved in the database', g:'best', why:'Cheap, built for big files, and easy to speed up with a CDN later. The database stays small and fast.'},
+      {t:'Inside the database itself', g:'ok', why:'Works for a handful of photos. At thousands, the database bloats, backups crawl, and menu queries drag pictures along with them.'},
+      {t:'On the API server’s own hard drive', g:'bad', why:'Fine until you add a second server. Then half the photos live on the other machine and customers see broken images. (Spoiler: you add more servers in level 6.)'}
+    ]},
+    {id:'data3', type:'single', q:'Mrs. Lin raises the dumplings from $8 to $9. What should last month’s receipts show?', options:[
+      {t:'$8, because the price is copied into each order when it’s placed', g:'best', why:'A receipt is a snapshot of a moment. Saving the price on the order line keeps history true after the menu changes.'},
+      {t:'$9, by looking up the current menu price', g:'bad', why:'Then old receipts change by themselves, and your accounting stops adding up.'}
+    ]}
+  ],
+  after:'<h2>Your tables</h2><p>Each line is a table and its columns. Notice <code>price_at_order</code> and <code>idempotency_key</code>: two earlier decisions, now written into the data.</p><pre><code>customers    id, name, phone\nrestaurants  id, name, address\nmenu_items   id, restaurant_id, name, price, photo_url\norders       id, customer_id, restaurant_id, status,\n             total, idempotency_key\norder_items  id, order_id, menu_item_id, quantity,\n             price_at_order</code></pre>',
+  unlock:'New in your system: the database and object storage for photos.'
+},
+{
+  id:'map', title:'Draw the map', step:'High-level diagram',
+  story:'You have an app, a server, a database and photo storage. Time to connect them with arrows and check the whole thing actually works.',
+  lessons:[
+    {t:'Boxes and arrows', b:'A box is something that runs or stores (an app, a server, a database). An arrow means “talks to”. That’s the whole language.', e:'A subway map shows stations and lines, and leaves out the tunnels and wiring. That’s exactly why it’s useful.'},
+    {t:'Follow one request', b:'The best test of a diagram is tracing one action from tap to answer. If you can’t say which box handles each step, something is missing.', e:'Following one letter through the post office teaches you more than a chart of every building.'},
+    {t:'Start with the fewest boxes', b:'One app server and one database can handle far more than most people think. Add a box only when a number tells you to.', e:'Don’t hire a parking valet for a restaurant with four tables.'}
+  ],
+  challenges:[
+    {id:'map1', type:'order', q:'Trace one order. Tap the steps in the right order.', steps:[
+      'Customer taps “Place order” in the app',
+      'App sends <code>POST /orders</code> to the API server',
+      'API server checks the cart and the idempotency key',
+      'Database saves the order and payment in one transaction',
+      'API server replies “Order #1042 received”',
+      'App shows the confirmation screen'
+    ], shuffle:[3,5,1,4,0,2]},
+    {id:'map2', type:'single', q:'A teammate wants to start with 12 separate services: a menu service, an order service, a payment service, and so on. For version 1?', options:[
+      {t:'Start with one well-organized app (a “monolith”) and split pieces out later when they need it', g:'best', why:'Separate services (microservices) help when many teams work in parallel, or parts need very different scaling. Their cost: network calls between services, more things to deploy and watch, and bugs hiding between boxes. Pay that cost when you get the benefit.'},
+      {t:'Go with separate services from day one, since you’ll need them eventually', g:'ok', why:'It can work, but you pay the full cost on day one and get the benefit years later, if ever.'},
+      {t:'Put everything, database included, inside the phone app', g:'bad', why:'Then every phone has its own private copy of every order, and restaurants never see any of them.'}
+    ]}
+  ],
+  after:'<h2>Your map works</h2><p>Finish the level, then press “Trace an order” under your system map to watch a request travel through the boxes.</p>',
+  unlock:'You can now trace an order on your system map.'
+},
+{
+  id:'rush', title:'Dinner rush', step:'Scaling',
+  story:'Launch week. At 7 p.m. a famous food account posts about the app, and traffic jumps 20×. The one API server is at 100% and menus take 8 seconds to load.',
+  lessons:[
+    {t:'Bigger machine or more machines?', b:'Vertical scaling means a bigger server: simple, but there’s a biggest size, and if it dies, everything stops. Horizontal scaling means more servers: no hard limit, and one can die without drama, but they have to share the work.', e:'Hire one superstar chef, or five good chefs. The superstar is simpler, until they call in sick.'},
+    {t:'Load balancer: the host at the door', b:'It sits in front of your servers, sends each request to one that isn’t busy, and skips any that are down.', e:'The restaurant host who seats you in the section with a free waiter.'},
+    {t:'Cache: the batch ready at the counter', b:'Keep popular answers in fast memory (such as Redis) instead of cooking them from scratch every time. The catch: what’s in the cache can be a little old.', e:'A tray of dumplings ready at the counter. Quick to grab, but not fresh from the steamer.'},
+    {t:'CDN: copies near the customer', b:'A content delivery network keeps copies of your photos in data centers around the world, so they load from nearby instead of from one faraway place.', e:'Stocking the corner shop so people don’t have to drive to the factory.'}
+  ],
+  challenges:[
+    {id:'rush1', type:'single', q:'Your one API server is maxed out. Which plan grows furthest over the next year?', options:[
+      {t:'Run several API servers behind a load balancer', g:'best', why:'No hard ceiling, and losing one server is a shrug. The requirement: servers must be “stateless”, keeping nothing important on their own disk. That’s exactly why photos went to object storage in level 4.'},
+      {t:'Upgrade to a bigger server', g:'ok', why:'A great quick fix for tonight, with no code changes. But there is a biggest machine, and it’s still one box that can fail.'},
+      {t:'Limit the app to 500 people at a time', g:'bad', why:'It protects the server by turning away customers. That’s the opposite of the goal.'}
+    ]},
+    {id:'rush2', type:'single', q:'Remember: 20 menu views for every order. What belongs in the cache?', options:[
+      {t:'Restaurant menus', g:'best', why:'Read constantly, changed rarely, and a minute-old menu is fine (you decided that in level 1). Now most menu requests never touch the database.'},
+      {t:'Payment status', g:'bad', why:'Money must always be exact. A stale “not paid” could make someone pay twice.'},
+      {t:'Everything', g:'bad', why:'Then stale data appears where it hurts, like payments and order status. And memory isn’t free.'}
+    ]},
+    {id:'rush3', type:'single', q:'Mrs. Lin raised dumplings to $9 a minute ago. The cache still says $8, and a customer orders. What happens?', options:[
+      {t:'At checkout, the API checks prices in the database. If one changed, the app shows “Price updated to $9” before charging.', g:'best', why:'Cache for looking, database for paying. You get fast browsing and correct charges.'},
+      {t:'Never cache prices, just to be safe', g:'ok', why:'Safe, but every menu view hits the database again and the speed win disappears.'},
+      {t:'Quietly charge $9', g:'bad', why:'The customer agreed to $8. Surprises on a card statement are how apps get deleted.'}
+    ]}
+  ],
+  unlock:'New in your system: a load balancer, more API servers, a cache and a CDN.'
+},
+{
+  id:'break', title:'Things break', step:'Reliability',
+  story:'Two weeks in. Texts to customers sometimes take 6 seconds, and checkout freezes while it waits. Then one night, the database server’s disk dies.',
+  lessons:[
+    {t:'Queue: the ticket rail', b:'Slow work doesn’t have to happen while the customer waits. Write it on a ticket, put it in a queue, and let a background worker handle it.', e:'The waiter clips the ticket on the rail and goes back to the tables. The cook picks it up when ready.'},
+    {t:'Single point of failure', b:'Any box that, if it stops, takes the whole app down with it. Find each one and give it a backup.', e:'An old string of holiday lights: one bulb goes, and the whole string goes dark.'},
+    {t:'Replica: a live copy', b:'A second database that copies every change from the main one. If the main one dies, the copy takes over within seconds.', e:'A spare house key at a neighbor’s place.'},
+    {t:'Correct or available?', b:'When two copies of your data can’t talk to each other, you must choose: refuse to answer until they agree (stay correct), or answer from what you have (stay available). That’s the famous CAP theorem in one sentence.', e:'An ATM that can’t reach the bank: refuse withdrawals, or hand out cash and hope the balance was right?'}
+  ],
+  challenges:[
+    {id:'brk1', type:'single', q:'After saving an order, the app must text the customer and alert the restaurant. The text provider sometimes takes 6 seconds. When should the texts be sent?', options:[
+      {t:'Put a “send notifications” job on a queue. A worker sends the texts, and the customer sees their confirmation right away.', g:'best', why:'Checkout stays fast, and if the text provider is down, the worker retries later. The cost: more parts to run, and texts may arrive a few seconds after the order.'},
+      {t:'Inside the checkout request, before replying to the customer', g:'ok', why:'Simplest to build. But every customer waits on the slowest text, and if the provider is down, checkout fails even though the order was fine.'},
+      {t:'Skip notifications', g:'bad', why:'The restaurant never hears about the order. The dumplings are never made.'}
+    ]},
+    {id:'brk2', type:'single', q:'Which box on your map is the scariest single point of failure?', options:[
+      {t:'The database', g:'best', why:'There are several API servers, so one can die. One database means everything stops. The fix: a replica that takes over automatically. The cost: roughly double the database bill, and the copy runs a fraction of a second behind.'},
+      {t:'The load balancer', g:'ok', why:'Good catch, it is one box. But cloud load balancers are usually run as redundant pairs for you, so it’s less scary than the database.'},
+      {t:'The customer app', g:'bad', why:'If one phone breaks, one customer has a bad night. Everyone else keeps ordering.'}
+    ]},
+    {id:'brk3', type:'single', q:'A network glitch: the replica can’t reach the main database for 30 seconds. Someone tries to order the last set of dumplings, which sold out a second ago. For orders, which do you pick?', options:[
+      {t:'Stay correct: hold the order until the main database confirms, even if the app has to say “try again”', g:'best', why:'For money and stock, wrong is worse than slow. A short “try again” beats selling food that doesn’t exist.'},
+      {t:'Stay available: accept the order using the copy’s data and sort it out later', g:'ok', why:'The right call for things like browsing menus, likes or view counts, where slightly old data hurts nobody. For orders, you’d be refunding angry customers.'}
+    ]}
+  ],
+  unlock:'New in your system: a queue, a worker, notifications and a database replica.'
+}
+];
+
+const GRADE = { best:{xp:20,label:'Best answer'}, ok:{xp:8,label:'Works, with a cost'}, bad:{xp:0,label:'Not this one'} };
+const MULTI_XP = 3, ORDER_MAX = 24, ORDER_PENALTY = 4;
+
+/* ---------- map ---------- */
+const NODES = {
+  client: {x:150,y:16, w:120,h:42,label:'Customer app',sub:'phone', lvl:'req'},
+  cdn:    {x:300,y:16, w:110,h:42,label:'CDN',sub:'nearby photos', lvl:'rush'},
+  lb:     {x:150,y:96, w:120,h:42,label:'Load balancer',sub:'spreads traffic', lvl:'rush'},
+  storage:{x:300,y:96, w:110,h:42,label:'Object storage',sub:'photos', lvl:'data'},
+  cache:  {x:10, y:176,w:110,h:42,label:'Cache',sub:'hot menus', lvl:'rush'},
+  api:    {x:150,y:176,w:120,h:42,label:'API server',sub:'the logic', lvl:'api'},
+  queue:  {x:300,y:176,w:110,h:42,label:'Queue',sub:'jobs to do', lvl:'break'},
+  db:     {x:150,y:262,w:120,h:42,label:'Database',sub:'orders, menus', lvl:'data'},
+  worker: {x:300,y:262,w:110,h:42,label:'Worker',sub:'does the jobs', lvl:'break'},
+  replica:{x:150,y:348,w:120,h:42,label:'DB replica',sub:'live copy', lvl:'break'},
+  notify: {x:300,y:348,w:110,h:42,label:'Texts & push',sub:'to people', lvl:'break'}
+};
+const EDGES = [
+  {d:'M210 58 L210 94', needs:['client','lb']},
+  {d:'M210 138 L210 174', needs:['lb','api']},
+  {d:'M210 58 L210 174', needs:['client','api'], unless:'lb'},
+  {d:'M270 37 L298 37', needs:['client','cdn'], dash:true},
+  {d:'M355 58 L355 94', needs:['cdn','storage'], dash:true},
+  {d:'M270 182 L298 132', needs:['api','storage']},
+  {d:'M150 197 L122 197', needs:['api','cache']},
+  {d:'M270 197 L298 197', needs:['api','queue']},
+  {d:'M210 218 L210 260', needs:['api','db']},
+  {d:'M355 218 L355 260', needs:['queue','worker']},
+  {d:'M300 283 L272 283', needs:['worker','db']},
+  {d:'M355 304 L355 346', needs:['worker','notify']},
+  {d:'M210 304 L210 346', needs:['db','replica'], dash:true}
+];
+
+function buildMap(){
+  const svg = document.getElementById('map');
+  let s = '<defs><marker id="arr" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L8 4 L0 8 z" style="fill:var(--muted)"/></marker></defs>';
+  EDGES.forEach((e,i)=>{ s += `<path class="edge${e.dash?' dash':''}" id="e${i}" d="${e.d}" marker-end="url(#arr)"/>`; });
+  s += `<g class="scale" id="scale"><rect x="10" y="262" width="120" height="128" rx="8"/>
+        <text class="t1" x="22" y="286">Dinner rush</text>
+        <text class="t2" x="22" y="308">~10 orders / sec</text>
+        <text class="t2" x="22" y="328">~200 menu views / sec</text>
+        <text class="t2" x="22" y="356">20 looks per order:</text>
+        <text class="t2" x="22" y="374">read-heavy</text></g>`;
+  for (const [id,n] of Object.entries(NODES)){
+    const cx = n.x + n.w/2;
+    const stack = id==='api' ? `<rect class="stack" x="${n.x+8}" y="${n.y-8}" width="${n.w}" height="${n.h}" rx="8"/><rect class="stack" x="${n.x+4}" y="${n.y-4}" width="${n.w}" height="${n.h}" rx="8"/>` : '';
+    s += `<g class="node" id="n-${id}">${stack}<rect class="box" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="8"/>
+      <text class="nlabel" id="l-${id}" x="${cx}" y="${n.y+18}">${n.label}</text>
+      <text class="nsub" x="${cx}" y="${n.y+33}">${n.sub}</text></g>`;
+  }
+  s += '<circle id="dot" r="7" cx="210" cy="37"/>';
+  svg.innerHTML = s;
+}
+const isDone = id => state.done.includes(id);
+const nodeOn = id => isDone(NODES[id].lvl);
+
+function updateMap(animate){
+  let count = 0;
+  for (const id of Object.keys(NODES)){
+    const el = document.getElementById('n-'+id);
+    const on = nodeOn(id);
+    if (on) count++;
+    if (animate && on && !el.classList.contains('on')){
+      el.classList.remove('pop'); void el.getBBox(); el.classList.add('pop');
+      setTimeout(()=>el.classList.remove('pop'), 1400);
+    }
+    el.classList.toggle('on', on);
+  }
+  const multi = isDone('rush');
+  document.getElementById('n-api').classList.toggle('multi', multi);
+  document.getElementById('l-api').textContent = multi ? 'API servers ×3' : 'API server';
+  EDGES.forEach((e,i)=>{
+    const on = e.needs.every(nodeOn) && !(e.unless && nodeOn(e.unless));
+    document.getElementById('e'+i).classList.toggle('on', on);
+  });
+  document.getElementById('scale').classList.toggle('on', isDone('est'));
+  document.getElementById('partCount').textContent = count === 1 ? '1 part' : count + ' parts';
+  const canTrace = isDone('map');
+  document.getElementById('traceBtn').hidden = !canTrace;
+  if (!tracing){
+    document.getElementById('traceCap').textContent =
+      count === 0 ? 'Empty for now. Finish level 1 to place the first box.' :
+      !canTrace ? 'Boxes and arrows appear as you finish levels.' :
+      'Press “Trace an order” to watch one request travel through your system.';
+  }
+}
+
+/* trace animation */
+let tracing = false;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const center = id => { const n = NODES[id]; return [n.x+n.w/2, n.y+n.h/2]; };
+const sleep = ms => new Promise(r=>setTimeout(r,ms));
+function moveDot(dot, from, to){
+  return new Promise(res=>{
+    if (reduceMotion){ dot.setAttribute('cx',to[0]); dot.setAttribute('cy',to[1]); return res(); }
+    const dist = Math.hypot(to[0]-from[0], to[1]-from[1]);
+    const dur = Math.max(260, dist*3.2), t0 = performance.now();
+    (function f(now){
+      const p = Math.min(1,(now-t0)/dur), k = p<.5 ? 2*p*p : 1-Math.pow(-2*p+2,2)/2;
+      dot.setAttribute('cx', from[0]+(to[0]-from[0])*k);
+      dot.setAttribute('cy', from[1]+(to[1]-from[1])*k);
+      p<1 ? requestAnimationFrame(f) : res();
+    })(performance.now());
+  });
+}
+async function trace(){
+  if (tracing) return;
+  tracing = true;
+  const btn = document.getElementById('traceBtn'), cap = document.getElementById('traceCap'), dot = document.getElementById('dot');
+  btn.disabled = true;
+  const hops = [{n:'client', c:'The customer taps “Place order”.'}];
+  if (nodeOn('lb')) hops.push({n:'lb', c:'The load balancer picks a server that isn’t busy.'});
+  hops.push({n:'api', c:'The API server checks the cart, the prices and the idempotency key.'});
+  hops.push({n:'db', c:'The database saves the order and payment in one transaction.'});
+  hops.push({n:'api', c: nodeOn('queue') ? 'The API server drops a “send notifications” job on the queue and replies “Order received”.' : 'The API server replies “Order #1042 received”.'});
+  if (nodeOn('lb')) hops.push({n:'lb', c:'The reply travels back out.'});
+  hops.push({n:'client', c:'The app shows the confirmation. The customer is done waiting.'});
+  if (nodeOn('queue')){
+    hops.push({n:'queue', c:'Meanwhile, in the background: the job waits on the queue.', jump:'api'});
+    hops.push({n:'worker', c:'A worker picks it up and marks the order “sent to restaurant”.'});
+    hops.push({n:'notify', c:'The restaurant and the customer each get a text.'});
+  }
+  let pos = center(hops[0].n);
+  dot.setAttribute('cx',pos[0]); dot.setAttribute('cy',pos[1]); dot.style.opacity = 1;
+  for (const h of hops){
+    if (h.jump){ pos = center(h.jump); dot.setAttribute('cx',pos[0]); dot.setAttribute('cy',pos[1]); await sleep(150); }
+    const to = center(h.n);
+    await moveDot(dot, pos, to); pos = to;
+    const el = document.getElementById('n-'+h.n);
+    el.classList.add('lit'); cap.textContent = h.c;
+    await sleep(reduceMotion ? 1600 : 1300);
+    el.classList.remove('lit');
+  }
+  dot.style.opacity = 0;
+  cap.textContent = 'That’s one order. At the dinner rush, this happens about 10 times a second.';
+  btn.disabled = false; btn.textContent = 'Trace again';
+  tracing = false;
+}
+
+/* ---------- state ---------- */
+const STORE = 'dumplingdash-v1';
+let state = {view:0, done:[], answers:{}};
+try {
+  const s = JSON.parse(localStorage.getItem(STORE) || 'null');
+  if (s && Array.isArray(s.done) && s.answers && typeof s.view === 'number') state = s;
+} catch(e){}
+function save(){ try { localStorage.setItem(STORE, JSON.stringify(state)); } catch(e){} }
+
+const multiSel = {}, orderState = {};
+const allChallenges = LEVELS.flatMap(l=>l.challenges);
+const findC = id => allChallenges.find(c=>c.id===id);
+const maxFor = c => c.type==='single' ? GRADE.best.xp : c.type==='multi' ? c.items.length*MULTI_XP : ORDER_MAX;
+const MAX_XP = allChallenges.reduce((a,c)=>a+maxFor(c),0);
+const totalXP = () => Object.values(state.answers).reduce((a,x)=>a+(x.xp||0),0);
+const levelComplete = L => L.challenges.every(c=>state.answers[c.id]);
+const reachable = v => v===0 || v <= state.done.length+1;
+
+/* ---------- render ---------- */
+function renderTop(){
+  const xp = totalXP();
+  document.getElementById('xpNow').textContent = xp;
+  document.getElementById('xpMax').textContent = MAX_XP;
+  document.getElementById('xpFill').style.width = (100*xp/MAX_XP)+'%';
+  const shortNames = ['Requirements','Estimate','API','Data','Diagram','Scale','Reliability'];
+  let h = '';
+  LEVELS.forEach((L,i)=>{
+    const v = i+1, cls = [isDone(L.id)?'done':'', state.view===v?'current':''].join(' ');
+    h += `<li><button class="${cls}" data-act="goto" data-v="${v}" ${reachable(v)?'':'disabled'} ${state.view===v?'aria-current="step"':''}><span class="n">${isDone(L.id)?'✓':v}</span>${shortNames[i]}</button></li>`;
+  });
+  h += `<li><button class="${state.view===8?'current':''}" data-act="goto" data-v="8" ${state.done.length===LEVELS.length?'':'disabled'}><span class="n">★</span>Launch</button></li>`;
+  document.getElementById('track').innerHTML = h;
+}
+
+function renderIntro(){
+  return `<section class="intro">
+    <h1>Build a food delivery app, one decision at a time</h1>
+    <p class="lede">You’re the engineer behind DumplingDash. Each level is one real step of system design, and every step ends with choices. Your system map on the side grows as you go.</p>
+    <p class="how">Most questions have a best answer, plus answers that work but cost something. After each pick you’ll see why every option wins or loses, because those costs are the whole point.</p>
+    <ol class="steps">${LEVELS.map(L=>`<li><div><b>${L.title}</b><span>${L.step}</span></div></li>`).join('')}</ol>
+    <div class="row" style="margin-top:24px"><button class="btn" data-act="goto" data-v="${Math.min(state.done.length+1,LEVELS.length)}">${state.done.length?'Continue playing':'Start level 1'}</button></div>
+  </section>`;
+}
+
+function renderSingle(c){
+  const a = state.answers[c.id];
+  const opts = c.options.map((o,i)=>{
+    if (!a) return `<button class="opt" data-act="pick" data-cid="${c.id}" data-i="${i}">${o.t}</button>`;
+    const chosen = a.v===i;
+    return `<div class="opt answered g-${o.g}${chosen?' chosen':''}"><div>${o.t}</div>
+      <div class="verdict"><span class="pill grade">${GRADE[o.g].label}</span>${chosen?'<span class="pill you">Your pick</span>':''}</div>
+      <p class="why">${o.why}</p></div>`;
+  }).join('');
+  return `<div class="opts">${opts}</div>${a?`<p class="gain">+${a.xp} XP</p>`:''}`;
+}
+
+function renderMulti(c){
+  const a = state.answers[c.id];
+  if (!a){
+    const sel = multiSel[c.id] || (multiSel[c.id] = new Set());
+    return `<div class="chips">${c.items.map((it,i)=>`<button class="chip" data-act="toggle" data-cid="${c.id}" data-i="${i}" aria-pressed="${sel.has(i)}">${it.t}</button>`).join('')}</div>
+      <div class="row"><button class="btn" data-act="checkmulti" data-cid="${c.id}" ${sel.size?'':'disabled'}>Check my picks</button><span class="note" style="color:var(--muted);font-size:.93rem">${sel.size} picked</span></div>`;
+  }
+  return `<ul class="res">${c.items.map((it,i)=>{
+      const picked = a.v.includes(i), right = picked===it.core;
+      return `<li class="${right?'right':'wrong'}"><span class="mark" aria-label="${right?'Correct':'Incorrect'}">${right?'✓':'✗'}</span>
+        <div>${it.t}<span class="tag">${it.core?'Version 1':'Later'}</span>${picked?'<span class="tag">You picked it</span>':''}<small>${it.why}</small></div></li>`;
+    }).join('')}</ul><p class="gain">+${a.xp} XP</p>`;
+}
+
+function renderOrder(c){
+  const a = state.answers[c.id];
+  const os = orderState[c.id] || (orderState[c.id] = {picked:[], mistakes:0, shake:null, msg:''});
+  const picked = a ? c.steps.map((_,i)=>i) : os.picked;
+  let slots = picked.map(i=>`<li>${c.steps[i]}</li>`).join('');
+  for (let k=picked.length; k<c.steps.length; k++) slots += '<li class="empty">…</li>';
+  if (a) return `<ol class="slots">${slots}</ol><p class="gain">Traced with ${a.v} wrong ${a.v===1?'tap':'taps'}. +${a.xp} XP</p>`;
+  const pool = c.shuffle.filter(i=>!os.picked.includes(i)).map(i=>
+    `<button class="step${os.shake===i?' shake':''}" data-act="orderpick" data-cid="${c.id}" data-i="${i}">${c.steps[i]}</button>`).join('');
+  return `<ol class="slots">${slots}</ol><div class="pool">${pool}</div><p class="hint${os.msg?' warn':''}" aria-live="polite">${os.msg || 'Tap the step that happens next.'}</p>`;
+}
+
+function renderLevel(v){
+  const L = LEVELS[v-1];
+  const complete = levelComplete(L);
+  let h = `<section class="lvl"><div class="lvl-head"><p class="lvl-meta">Level ${v} of ${LEVELS.length}, step: ${L.step}</p><h1>${L.title}</h1></div>
+    <p class="story">${L.story}</p>
+    <div class="lessons"><h2>What you need to know</h2>${L.lessons.map(x=>`<div class="lesson"><h3>${x.t}</h3><p>${x.b}</p><p class="analogy"><b>Everyday version:</b>${x.e}</p></div>`).join('')}</div>
+    <div class="challenges"><h2>Your decisions</h2>`;
+  L.challenges.forEach((c,i)=>{
+    const body = c.type==='single' ? renderSingle(c) : c.type==='multi' ? renderMulti(c) : renderOrder(c);
+    h += `<div class="challenge" id="c-${c.id}" tabindex="-1"><p class="c-count">Decision ${i+1} of ${L.challenges.length}</p><p class="q">${c.q}</p>${body}</div>`;
+  });
+  h += '</div>';
+  if (complete && L.after) h += `<div class="after">${L.after}</div>`;
+  h += '<div class="foot">';
+  if (!complete) h += `<span class="note">Make all ${L.challenges.length} decisions to finish this level.</span>`;
+  else if (!isDone(L.id)) h += `<button class="btn" data-act="finish" data-l="${L.id}">Finish level ${v}</button>`;
+  else if (v < LEVELS.length) h += `<button class="btn" data-act="goto" data-v="${v+1}">Go to level ${v+1}: ${LEVELS[v].title}</button>`;
+  else h += `<button class="btn" data-act="goto" data-v="8">See your launched system</button>`;
+  h += '</div></section>';
+  return h;
+}
+
+function renderFinal(){
+  const xp = totalXP(), pct = xp/MAX_XP;
+  const rank = pct>=.85 ? ['Staff engineer','You weighed costs, not just features. That’s the job.'] :
+               pct>=.65 ? ['Senior engineer','Solid instincts. Revisit the “works, with a cost” answers to sharpen them.'] :
+               pct>=.4  ? ['Mid-level engineer','The shape is there. Replay a level or two and read every option’s explanation.'] :
+                          ['Junior engineer','Everyone starts here. Replay and read why each option wins or loses.'];
+  const rows = [
+    ['Small version 1','Ship sooner, fewer bugs','Nice features wait'],
+    ['Polling for status','Simple to build','Up to 10 s late, wasted requests'],
+    ['Push (WebSocket)','Instant updates','Open connections to manage'],
+    ['Idempotency key','No double charges','Server must remember keys'],
+    ['SQL database','Transactions, clear links','Harder to spread over many machines'],
+    ['One app, not 12 services','Easy to build and debug','Must split later as teams grow'],
+    ['More servers + load balancer','No ceiling, survives a crash','Servers must be stateless'],
+    ['Cache','Very fast reads, less DB load','Data can be a little old'],
+    ['Queue + worker','Fast replies, automatic retries','More parts, work happens later'],
+    ['Database replica','Survives a dead disk','About 2× cost, tiny copy delay'],
+    ['Stay correct over available','Never wrong about money','Sometimes says “try again”']
+  ];
+  return `<section class="final">
+    <p class="lvl-meta">All 7 levels done</p>
+    <h1 style="font-size:clamp(2rem,4.5vw,3rem);font-weight:800;margin-top:6px;letter-spacing:-0.03em">DumplingDash is live</h1>
+    <p class="story">You took it from a list of features to a system that survives a dinner rush and a dead disk. Every choice bought something and cost something. Seeing both sides is what system design is.</p>
+    <div class="rank"><span class="big">${xp}</span><div><b>${rank[0]}</b><p>${rank[1]} (${xp} of ${MAX_XP} XP)</p></div></div>
+    <h2>The seven steps, for any system</h2>
+    <ol class="steps">
+      <li><div><b>Requirements</b><span>What it does, and how well it must do it.</span></div></li>
+      <li><div><b>Estimate</b><span>Napkin math for the busiest moment, and the read-to-write ratio.</span></div></li>
+      <li><div><b>API</b><span>The counter menu between the app and the server.</span></div></li>
+      <li><div><b>Data</b><span>Where each kind of thing lives, and how tables connect.</span></div></li>
+      <li><div><b>Diagram</b><span>Boxes and arrows, then trace one request through them.</span></div></li>
+      <li><div><b>Scale</b><span>More servers, a load balancer, a cache and a CDN, when the numbers say so.</span></div></li>
+      <li><div><b>Break it</b><span>Queues for slow work, replicas for failure, and correct versus available.</span></div></li>
+    </ol>
+    <h2>Trade-off cheat sheet</h2>
+    <div class="tbl"><table><thead><tr><th>Decision</th><th>You gain</th><th>You pay</th></tr></thead><tbody>
+      ${rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
+    </tbody></table></div>
+    <h2>Try one on your own</h2>
+    <p style="margin-top:8px">Design the live driver map you postponed in level 1. Drivers send their location every few seconds, so this part writes far more than it reads: the opposite of menus. Walk the seven steps. What changes?</p>
+    <div class="row" style="margin-top:22px"><button class="btn ghost" data-act="reset" id="resetBtn">Play again from the start</button></div>
+  </section>`;
+}
+
+function renderMain(){
+  const m = document.getElementById('main');
+  m.innerHTML = state.view===0 ? renderIntro() : state.view===8 ? renderFinal() : renderLevel(state.view);
+}
+function render(){ renderTop(); renderMain(); updateMap(false); }
+
+/* ---------- toast ---------- */
+let toastTimer;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 4200);
+}
+
+/* ---------- events ---------- */
+let resetArmed = false;
+document.addEventListener('click', e=>{
+  const b = e.target.closest('[data-act]'); if (!b || b.disabled) return;
+  const act = b.dataset.act, cid = b.dataset.cid, i = +b.dataset.i;
+  if (act==='goto'){
+    const v = +b.dataset.v; if (!reachable(v) && v!==8) return;
+    state.view = v; save(); render();
+    window.scrollTo({top:0, behavior: reduceMotion?'auto':'smooth'});
+    document.getElementById('main').focus({preventScroll:true});
+  }
+  else if (act==='pick'){
+    const c = findC(cid); const o = c.options[i];
+    state.answers[cid] = {v:i, xp:GRADE[o.g].xp}; save(); renderTop(); renderMain();
+    document.getElementById('c-'+cid).focus({preventScroll:true});
+  }
+  else if (act==='toggle'){
+    const s = multiSel[cid]; s.has(i) ? s.delete(i) : s.add(i); renderMain();
+    const again = document.querySelector(`[data-act="toggle"][data-cid="${cid}"][data-i="${i}"]`); if (again) again.focus();
+  }
+  else if (act==='checkmulti'){
+    const c = findC(cid), sel = [...multiSel[cid]];
+    const correct = c.items.filter((it,k)=>sel.includes(k)===it.core).length;
+    state.answers[cid] = {v:sel, xp:correct*MULTI_XP}; save(); renderTop(); renderMain();
+    document.getElementById('c-'+cid).focus({preventScroll:true});
+  }
+  else if (act==='orderpick'){
+    const c = findC(cid), os = orderState[cid];
+    if (i === os.picked.length){
+      os.picked.push(i); os.shake = null; os.msg = '';
+      if (os.picked.length === c.steps.length){
+        state.answers[cid] = {v:os.mistakes, xp:Math.max(4, ORDER_MAX - ORDER_PENALTY*os.mistakes)}; save(); renderTop();
+      }
+    } else {
+      os.mistakes++; os.shake = i;
+      os.msg = 'Not yet. What has to happen before that step?';
+    }
+    renderMain();
+    const next = document.querySelector(`#c-${cid} .step`) || document.getElementById('c-'+cid);
+    next.focus({preventScroll:true});
+  }
+  else if (act==='finish'){
+    const lid = b.dataset.l, idx = LEVELS.findIndex(L=>L.id===lid);
+    if (!state.done.includes(lid)) state.done.push(lid);
+    state.view = idx+1 < LEVELS.length ? idx+2 : 8; save();
+    renderTop(); renderMain(); updateMap(true);
+    toast(LEVELS[idx].unlock);
+    window.scrollTo({top:0, behavior: reduceMotion?'auto':'smooth'});
+    document.getElementById('main').focus({preventScroll:true});
+  }
+  else if (act==='trace'){ trace(); }
+  else if (act==='reset'){
+    if (!resetArmed){ resetArmed = true; b.textContent = 'Tap again to erase your progress'; setTimeout(()=>{ resetArmed=false; const r=document.getElementById('resetBtn'); if(r) r.textContent='Play again from the start'; }, 4000); return; }
+    state = {view:0, done:[], answers:{}};
+    for (const k in multiSel) delete multiSel[k];
+    for (const k in orderState) delete orderState[k];
+    save(); resetArmed = false; render(); window.scrollTo({top:0});
+  }
+});
+
+if (window.matchMedia('(max-width: 920px)').matches && state.view > 0) document.querySelector('.panel').open = true;
+buildMap();
+if (!reachable(state.view) && state.view !== 8) state.view = 0;
+render();
+</script>
+</body>
+</html>

@@ -184,6 +184,34 @@ body {
   cursor: pointer;
 }
 
+/* ── Embedded page (Ideas: a whole HTML page inside the site) ── */
+
+.main-content.has-embed {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+
+.project-link {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: #bbb;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.project-link:hover { color: #111; }
+
+.embed-frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  border: none;
+  border-top: 1px solid #f0f0f0;
+}
+
 /* ── Info page ── */
 
 .info-content {
@@ -429,6 +457,11 @@ body {
 
   .project-header {
     padding: 0 16px 24px;
+  }
+
+  .embed-frame {
+    flex: none;
+    height: calc(100vh - 160px);
   }
 
   .lightbox {
